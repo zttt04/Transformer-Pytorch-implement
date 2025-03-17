@@ -7,8 +7,8 @@ from tqdm import tqdm
 mname = './wmt19-en-de'
 tokenizer = FSMTTokenizer.from_pretrained(mname)
 
-en_data = pq.read_table("../Val/en_data_val.parquet")
-de_data = pq.read_table("../Val/de_data_val.parquet")
+en_data = pq.read_table("../Val/en_data_train.parquet")
+de_data = pq.read_table("../Val/de_data_train.parquet")
 
 if 'en' in en_data.column_names and 'de' in de_data.column_names:
     en_sentences = en_data['en'].to_pandas().tolist()
