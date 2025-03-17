@@ -5,8 +5,8 @@ ATT3                                     ##哈哈3意味着这是我的第三版
 │   ├── Test                             ##测试数据集
 │   │   ├── de_data_test.parquet         ##德语数据 
 │   │   ├── en_data_test.parquet         ##英文数据
-│   │   ├── de_processed_test_indexes.pt          ##最终测试数据
-│   │   ├── en_processed_test_indexes.pt          ##最终测试数据
+│   │   ├── de_processed_test_indexes.pt ##最终测试数据
+│   │   ├── en_processed_test_indexes.pt ##最终测试数据
 │   │   ├── test.parquet                 ##整理后的数据（没啥用）
 │   │   └── test1.parquet                ##从官网下载的源数据
 │   ├── Tokenizer                        ##储存tokenizer以及做分词
@@ -16,16 +16,16 @@ ATT3                                     ##哈哈3意味着这是我的第三版
 │   │   ├── combined_train.parquet       ##由于官网的数据太大了是分成了三部分，所以我这里把三个整合起来
 │   │   ├── de_data.parquet              ##德语数据
 │   │   ├── en_data.parquet              ##英语数据
-│   │   ├── de_processed_indexes.pt          ##最终训练数据
-│   │   ├── de_processed_indexes.pt          ##最终训练数据
+│   │   ├── de_processed_indexes.pt      ##最终训练数据
+│   │   ├── de_processed_indexes.pt      ##最终训练数据
 │   │   ├── train1.parquet               ##以下三个都是官网源数据
 │   │   ├── train2.parquet          
 │   │   └── train3.parquet          
 │   └── Val                              ##验证集（但是我没有用hh）
 │       ├── de_data_val.parquet          ##德语数据
 │       ├── en_data_val.parquet          ##英语数据
-│       ├──de_processed_indexes_val.pt ##最终验证数据（但没用到）
-│       ├── de_processed_indexes_val.pt         ##最终验证数据（但没用到）
+│       ├──de_processed_indexes_val.pt   ##最终验证数据（但没用到）
+│       ├── de_processed_indexes_val.pt  ##最终验证数据（但没用到）
 │       ├── val.parquet                  ##处理后的数据（好像没用）
 │       └── validation1.parquet          ##官网源数据
 ├── Processing.py                        ##数据处理脚本
@@ -42,6 +42,7 @@ ATT3                                     ##哈哈3意味着这是我的第三版
 ├── train.py                             ##训练脚本
 └── Transformer_model.py                 ##模型框架
 因为train的文件太大了无法上传，所以需要去https://huggingface.co/datasets/wmt/wmt14/viewer/de-en下载，会得到train的三个分段，然后按照我的框架将这三个文件统一放在新建的Train文件夹里，然后再依次运行Processing.py和tokenizer.py即可将训练数据整理出来。
+数据处理好后，想看训练过程的可以运行train.py,如果好奇最终结果的也可以直接运行test.pyhh。
 原文的bleu是25.8 我自己单卡bs64 epoch10 训练时间30h 最后22。但根据每个epoch的bleu趋势来看多训练几轮应该24可以达到（有空再试试，希望不要打脸ww）
 因为自己尝试复现的时候发现很多大佬的代码封装的都特别的好，确实可以开箱即用，但对于小白来说却很难从中学习，所以这个项目我设计的结构比较简单清楚，上面也对每一个部分都做了解释；
 同时我还专门让ai帮我给代码加了注释，希望可以降低阅读学习门槛，帮助大家学有所获！
