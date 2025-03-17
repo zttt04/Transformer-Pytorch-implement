@@ -1,0 +1,10 @@
+torch==2.5.1
+transformers==4.48.2
+nltk==3.9.1
+tqdm==4.66.5
+matplotlib==3.10.0
+pandas==2.2.3
+pyarrow==19.0.0
+scipy==1.15.2
+tokenizers==0.21.0
+tensorboard==2.19.0
