@@ -5,7 +5,7 @@ To help NLP beginners navigate this replication process with greater ease and ac
 
 
 ## FileFrame
-![FileFrame](https://raw.githubusercontent.com/zttt04/Transformer-Pytorch-implement/main/fig/frame.png)
+![FileFrame](fig/FileFrame.png)
 ## Data Preparation Notes
 
 - The large train files (from [WMT14 de-en dataset](https://huggingface.co/datasets/wmt/wmt14/viewer/de-en)) need manual download  
