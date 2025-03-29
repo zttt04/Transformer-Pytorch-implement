@@ -70,3 +70,8 @@ I'm waiting for you to find out the answer.
   <img src="fig/Mistake3.jpg" alt="Mistake3" width="60%">
   <figcaption>Mistake3:Ignore the wrong pad_idx when training</figcaption>
 </figure>
+<figure>
+  <img src="fig/transformer_loss_best.png" alt="loss_curve" width="60%">
+  <figcaption>The normal loss curve</figcaption>
+</figure>
+
