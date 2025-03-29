@@ -18,6 +18,10 @@ To help NLP beginners navigate this replication process with greater ease and ac
 - My result: 28.77 (single GPU, batch_size=64, 2 epochs, 6h training)
 - Beyond SOTA with less training cost(The reason will be explained later)
 <figure>
+  <img src="fig/MyBLEU.png" alt="mybleu" width="60%">
+  <figcaption>MyBLEU</figcaption>
+</figure>
+<figure>
   <img src="fig/sota.png" alt="sota" width="60%">
   <figcaption>Paper SOTA</figcaption>
 </figure>
