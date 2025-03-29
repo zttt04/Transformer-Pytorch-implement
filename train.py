@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')  # 使用非交互式后端，防止图形窗口弹出
+matplotlib.use('Agg')  # Use non-interactive backend to prevent GUI popups
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import csv
@@ -13,197 +13,197 @@ from Transformer_model import Transformer
 from config import TransformerConfig
 from mask import create_masks
 """
-文件说明：
-本脚本用于训练基于Transformer架构的机器翻译模型（英文→德文）。
-主要包含以下核心功能：
+File Description:
+This script trains a Transformer-based machine translation model (English → German).
+Core features include:
 
-1. 训练流程：
-   - 使用PyTorch实现完整的训练循环
-   - 支持多GPU训练（通过CUDA自动检测）
-   - 包含梯度裁剪防止梯度爆炸
-   - 实现Transformer论文中的学习率调度策略
+1. Training Process:
+   - Complete training loop implemented with PyTorch
+   - Supports multi-GPU training (autodetected via CUDA)
+   - Includes gradient clipping to prevent explosion
+   - Implements Transformer paper's learning rate scheduling
 
-2. 数据管理：
-   - 加载预处理后的索引数据（en/de processed_indexes.pt）
-   - 使用DataLoader进行批量处理和数据打乱
-   - 支持自定义批大小（config.batch_size）
+2. Data Management:
+   - Loads preprocessed indexed data (en/de processed_indexes.pt)
+   - Uses DataLoader for batching and shuffling
+   - Supports custom batch size (config.batch_size)
 
-3. 模型配置：
-   - 通过config.TransformerConfig集中管理超参数
-   - 支持自定义层数、头数、维度等核心参数
-   - 使用Xavier初始化权重
+3. Model Configuration:
+   - Centralized hyperparameter management via config.TransformerConfig
+   - Customizable layers, heads, dimensions, etc.
+   - Xavier initialization for weights
 
-4. 训练监控：
-   - 实时显示训练进度条（tqdm）
-   - 记录每200个batch的损失值和学习率
-   - 自动绘制并保存损失曲线（位于fig目录）
+4. Training Monitoring:
+   - Real-time progress bar (tqdm)
+   - Records loss and learning rate every 200 batches
+   - Automatically plots and saves loss curves (fig directory)
 
-5. 模型保存：
-   - 每个epoch结束后自动保存模型权重
-   - 使用绝对路径确保跨平台兼容性
-   - 权重文件按epoch编号命名（Weight目录）
+5. Model Saving:
+   - Automatically saves model weights after each epoch
+   - Uses absolute paths for cross-platform compatibility
+   - Weight files named by epoch (Weight directory)
 
-6. 日志系统：
-   - 记录每个epoch的训练摘要（epoch_training_logs.csv）
-   - 保存详细的batch级训练日志（batch_training_logs.csv）
-   - 自动创建目录结构（logs目录）
+6. Log System:
+   - Records epoch summaries (epoch_training_logs.csv)
+   - Saves detailed batch-level logs (batch_training_logs.csv)
+   - Automatically creates directory structure (logs directory)
 
-输出结果：
-- 模型权重文件（位于Weight目录）
-- 训练损失曲线（fig/transformer_loss_final1.png）
-- 详细训练日志（logs目录）
+Outputs:
+- Model weight files (Weight directory)
+- Training loss curve (fig/transformer_loss_final1.png)
+- Detailed training logs (logs directory)
 """
-# 读取模型配置参数
+# Load model configuration parameters
 config = TransformerConfig()
 
-# 训练参数设置
-batch_size = config.batch_size       # 批处理大小
-epochs = config.epochs               # 训练轮数
-warmup_steps = config.warmup_steps   # Transformer论文中的学习率warmup步数
+# Training parameter settings
+batch_size = config.batch_size       # Batch size
+epochs = config.epochs               # Number of epochs
+warmup_steps = config.warmup_steps   # Learning rate warmup steps from Transformer paper
 
-# 定义Transformer专用的学习率调度器
+# Define Transformer-specific learning rate scheduler
 class TransformerLRScheduler:
     def __init__(self, d_model, warmup_steps):
-        self.d_model = d_model          # 模型维度（论文中默认512）
-        self.warmup_steps = warmup_steps  # 学习率warmup阶段步数
-        self.step_num = 0               # 当前训练步数计数器
+        self.d_model = d_model          # Model dimension (default 512 in paper)
+        self.warmup_steps = warmup_steps  # Warmup phase steps
+        self.step_num = 0               # Current training step counter
 
     def step(self, optimizer):
-        # 按照论文公式更新学习率
+        # Update learning rate according to paper formula
         self.step_num += 1
         lr = (self.d_model ** -0.5) * min(self.step_num ** -0.5, self.step_num * (self.warmup_steps ** -1.5))
-        # 更新优化器学习率
+        # Update optimizer learning rate
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
-        return lr  # 返回当前学习率，方便日志记录
+        return lr  # Return current learning rate for logging
 
-# 绘制训练损失曲线的函数
+# Function to plot training loss curve
 def plot_loss(steps, losses, save_path):
-    plt.figure(figsize=(10, 6))  # 设置画布尺寸
-    plt.plot(steps, losses, linewidth=1.5, color='blue')  # 绘制损失曲线
-    plt.xlabel('Batch', fontsize=14)  # x轴标签
-    plt.ylabel('Loss', fontsize=14)  # y轴标签
-    plt.title('Loss every 200 batches', fontsize=16)  # 图表标题
-    plt.grid(True, which="both", linestyle='--', linewidth=0.5)  # 添加网格线
-    plt.savefig(save_path)  # 保存图表到指定路径
-    plt.close()  # 关闭图表释放内存
+    plt.figure(figsize=(10, 6))  # Set canvas size
+    plt.plot(steps, losses, linewidth=1.5, color='blue')  # Plot loss curve
+    plt.xlabel('Batch', fontsize=14)  # X-axis label
+    plt.ylabel('Loss', fontsize=14)  # Y-axis label
+    plt.title('Loss every 200 batches', fontsize=16)  # Chart title
+    plt.grid(True, which="both", linestyle='--', linewidth=0.5)  # Add grid lines
+    plt.savefig(save_path)  # Save chart to specified path
+    plt.close()  # Close figure to free memory
 
-# 主训练函数
+# Main training function
 def train():
-    # 设备选择（优先使用GPU）
+    # Device selection (prioritize GPU)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # 获取当前脚本所在的项目根目录
+    # Get project root directory
     project_root = os.path.dirname(os.path.abspath(__file__))
 
-    # 加载预处理后的索引数据
+    # Load preprocessed indexed data
     en_idx = torch.load(os.path.join(project_root, 'DataProcessing', 'Train', 'en_processed_indexes.pt'))
     de_idx = torch.load(os.path.join(project_root, 'DataProcessing', 'Train', 'de_processed_indexes.pt'))
 
-    # 创建数据集和数据加载器
-    dataset = TensorDataset(en_idx, de_idx)  # 将英文和德文数据配对
+    # Create dataset and data loader
+    dataset = TensorDataset(en_idx, de_idx)  # Pair English and German data
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=True  # 每个epoch前打乱数据
+        shuffle=True  # Shuffle data before each epoch
     )
 
-    # 初始化Transformer模型并移动到目标设备
+    # Initialize Transformer model and move to device
     model = Transformer(TransformerConfig()).to(device)
 
-    # 定义损失函数和优化器
-    criterion = nn.CrossEntropyLoss(ignore_index=1)  # 忽略填充索引（假设1为填充标记）
+    # Define loss function and optimizer
+    criterion = nn.CrossEntropyLoss(ignore_index=1)  # Ignore padding index (assuming 1 is padding)
     optimizer = optim.Adam(
         model.parameters(),
-        betas=(0.9, 0.98),  # 论文推荐的Adam参数
+        betas=(0.9, 0.98),  # Recommended Adam parameters from paper
         eps=1e-9
     )
 
-    # 初始化学习率调度器
+    # Initialize learning rate scheduler
     scheduler = TransformerLRScheduler(
         d_model=TransformerConfig().d_model,
         warmup_steps=warmup_steps
     )
 
-    # 初始化训练日志记录变量
-    losses = []        # 记录每200个batch的损失值
-    steps = []         # 记录对应的训练步数
-    step_count = 0     # 当前总训练步数计数器
+    # Initialize training log variables
+    losses = []        # Record loss every 200 batches
+    steps = []         # Corresponding training steps
+    step_count = 0     # Total training step counter
 
-    # 初始化详细日志数据存储
-    batch_log_data = []  # 存储每200个batch的日志
-    epoch_log_data = []  # 存储每个epoch的日志
+    # Initialize detailed log storage
+    batch_log_data = []  # Store per-200-batch logs
+    epoch_log_data = []  # Store per-epoch logs
 
     for epoch in range(epochs):
-        model.train()  # 设置模型为训练模式
-        train_loss = 0.0  # 初始化epoch总损失
+        model.train()  # Set model to training mode
+        train_loss = 0.0  # Initialize epoch loss
 
-        # 使用tqdm创建进度条
+        # Create progress bar with tqdm
         batch_iterator = tqdm(
             dataloader,
             desc=f"Epoch {epoch + 1}",
-            leave=False  # 不在控制台保留进度条
+            leave=False  # Remove progress bar from console after completion
         )
 
         for src_batch, tgt_batch in batch_iterator:
-            # 将数据移动到目标设备
+            # Move data to target device
             src_batch = src_batch.to(device)
             tgt_batch = tgt_batch.to(device)
 
-            # 创建源序列和目标序列的掩码
+            # Create masks for source and target sequences
             src_mask, tgt_mask = create_masks(
                 src_batch,
-                tgt_batch[:, :-1],  # 目标序列去掉最后一个token（用于teacher forcing）
-                1,  # 填充标记索引
+                tgt_batch[:, :-1],  # Target sequence without last token (for teacher forcing)
+                1,  # Padding index
                 device
             )
 
-            # 梯度清零
+            # Zero gradients
             optimizer.zero_grad()
 
-            # 前向传播
+            # Forward pass
             output = model(src_batch, tgt_batch[:, :-1], src_mask, tgt_mask)
 
-            # 计算损失
+            # Calculate loss
             loss = criterion(
-                output.view(-1, output.size(-1)),  # 展平预测结果
-                tgt_batch[:, 1:].contiguous().view(-1)  # 展平真实标签（跳过第一个token）
+                output.view(-1, output.size(-1)),  # Flatten predictions
+                tgt_batch[:, 1:].contiguous().view(-1)  # Flatten labels (skip first token)
             )
 
-            # 反向传播
+            # Backward pass
             loss.backward()
 
-            # 梯度裁剪（防止梯度爆炸）
+            # Gradient clipping (prevent explosion)
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.8)
 
-            # 更新模型参数
+            # Update model parameters
             optimizer.step()
 
-            # 更新学习率
+            # Update learning rate
             current_lr = scheduler.step(optimizer)
 
-            # 累加损失值
+            # Accumulate loss
             train_loss += loss.item()
 
-            # 更新进度条显示
+            # Update progress bar display
             batch_iterator.set_postfix(
                 loss=loss.item(),
-                lr=f"{current_lr:.8f}"  # 显示当前学习率
+                lr=f"{current_lr:.8f}"  # Show current learning rate
             )
 
-            # 记录每200个batch的训练信息
+            # Record training info every 200 batches
             step_count += 1
             if step_count % 200 == 0:
                 losses.append(loss.item())
                 steps.append(step_count)
-                # 绘制并保存损失曲线
+                # Plot and save loss curve
                 plot_loss(
                     steps,
                     losses,
                     os.path.join(project_root, 'fig', 'transformer_loss_final1.png')
                 )
 
-                # 记录详细日志
+                # Record detailed logs
                 batch_log_data.append({
                     'Epoch': epoch + 1,
                     'Batch': step_count,
@@ -211,23 +211,23 @@ def train():
                     'Learning Rate': current_lr
                 })
 
-        # 计算epoch平均损失
+        # Calculate epoch average loss
         epoch_loss = train_loss / len(dataloader)
         print(f'Epoch {epoch + 1}/{epochs} Loss: {epoch_loss:.4f}')
 
-        # 保存模型权重
+        # Save model weights
         save_path = os.path.join(project_root, 'Weight', f'transformer_epoch_{epoch + 1}_final1.pth')
         torch.save(model.state_dict(), save_path)
-        print(f"权重已保存: {save_path}")
+        print(f"Model weights saved: {save_path}")
 
-        # 记录epoch级别的日志
+        # Record epoch-level logs
         epoch_log_data.append({
             'Epoch': epoch + 1,
             'Epoch Loss': epoch_loss,
             'Final Learning Rate': current_lr
         })
 
-        # 保存epoch级别的日志到CSV
+        # Save epoch logs to CSV
         epoch_csv_save_path = os.path.join(project_root, 'logs', 'epoch_training_logs_final1.csv')
         os.makedirs(os.path.dirname(epoch_csv_save_path), exist_ok=True)
         with open(epoch_csv_save_path, 'w', newline='') as csvfile:
@@ -235,9 +235,9 @@ def train():
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(epoch_log_data)
-        print(f"Epoch {epoch + 1} 训练日志已保存到 {epoch_csv_save_path}")
+        print(f"Epoch {epoch + 1} training log saved to {epoch_csv_save_path}")
 
-    # 保存batch级别的详细日志到CSV
+    # Save detailed batch-level logs to CSV
     batch_csv_save_path = os.path.join(project_root, 'logs', 'batch_training_logs_final1.csv')
     os.makedirs(os.path.dirname(batch_csv_save_path), exist_ok=True)
     with open(batch_csv_save_path, 'w', newline='') as csvfile:
@@ -245,8 +245,8 @@ def train():
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(batch_log_data)
-    print(f"每200个batch训练日志已保存到 {batch_csv_save_path}")
+    print(f"Per-200-batch training logs saved to {batch_csv_save_path}")
 
-# 主程序入口
+# Main program entry point
 if __name__ == "__main__":
     train()
