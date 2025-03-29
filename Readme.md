@@ -17,6 +17,14 @@ To help NLP beginners navigate this replication process with greater ease and ac
 - Official BLEU: 27.4（Base Model）  
 - My result: 28.77 (single GPU, batch_size=64, 2 epochs, 6h training)
 - Beyond SOTA with less training cost(The reason will be explained later)
+<figure>
+  <img src="fig/sota.png" alt="sota" width="60%">
+  <figcaption>Paper SOTA</figcaption>
+</figure>
+<figure>
+  <img src="fig/config.png" alt="config" width="60%">
+  <figcaption>Base Model Config</figcaption>
+</figure>
 
 ## Project Design Philosophy
 
