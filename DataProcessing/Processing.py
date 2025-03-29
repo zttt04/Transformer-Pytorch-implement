@@ -1,83 +1,115 @@
 import pandas as pd
 import os
+"""
+File Description:
+This script processes translation task datasets with core functionalities:
 
-# 定义Train文件夹路径
+1. Data Merging:
+   - Combines all .parquet files under the Train folder
+   - Outputs merged data to train.parquet
+   - Automatically resets indexes
+
+2. Data Extraction:
+   - Parses 'translation' column from merged data
+   - Extracts English (en) and German (de) sentence pairs
+   - Automatically filters missing values
+
+3. Data Storage:
+   - Saves en/de data as separate .parquet files
+   - Storage path: DataProcessing/Train directory
+   - Generates file statistics (size, row count)
+
+4. Data Validation:
+   - Checks file existence
+   - Prints data preview (first 5 rows)
+   - Outputs file size, shape, and row statistics
+
+Input Requirements:
+- Input files must be in DataProcessing/Train directory
+- Files must contain 'translation' column (JSON format)
+- Each translation entry must have 'en' and 'de' keys
+
+Outputs:
+- Merged file: train.parquet
+- English file: en_data_train.parquet
+- German file: de_data_train.parquet
+- Console statistics and data previews
+
+Notes:
+- Ensure consistent encoding for input files
+- Empty values are automatically filtered
+- Adjust absolute paths according to environment
+"""
+
+# Define Train folder containing .parquet files
 train_folder = os.path.join('DataProcessing', 'Train')
-# 获取Train文件夹下所有.parquet文件路径
-train_files = [os.path.join(train_folder, file) for file in os.listdir(train_folder) if file.endswith('.parquet')]
-# 读取并合并数据
-combined_train_df = pd.concat([pd.read_parquet(file) for file in train_files], ignore_index=True)
-# 保存合并后的数据
+
+# Get full paths of all .parquet files in Train folder
+train_files = [
+    os.path.join(train_folder, file) 
+    for file in os.listdir(train_folder) 
+    if file.endswith('.parquet')
+]
+
+# Merge all parquet files with index reset
+combined_train_df = pd.concat(
+    [pd.read_parquet(file) for file in train_files], 
+    ignore_index=True
+)
+
+# Save merged DataFrame to parquet
 combined_train_path = os.path.join(train_folder, 'train.parquet')
 combined_train_df.to_parquet(combined_train_path, index=False)
 
-combined_train_path = os.path.join('DataProcessing', 'Train', 'combined_train.parquet')
+# Read merged data for processing
 combined_train_df = pd.read_parquet(combined_train_path)
 
-# 提取数据
+# Extract en/de pairs from translation column
 extracted_data = []
 for _, row in combined_train_df.iterrows():
-    translation_dict = row['translation']
-    en_value = translation_dict.get('en', None)
-    de_value = translation_dict.get('de', None)
-    extracted_data.append({'en': en_value, 'de': de_value})
+    translation = row['translation']
+    en_text = translation.get('en', None)
+    de_text = translation.get('de', None)
+    extracted_data.append({'en': en_text, 'de': de_text})
 
-# 创建 DataFrame
 extracted_df = pd.DataFrame(extracted_data)
-
-# 查看提取后的数据预览
-print("提取后的en和de列数据预览：")
+print("en/de Columns Preview:")
 print(extracted_df.head())
 
-# 保存为 .parquet 文件
-train_folder = os.path.join('DataProcessing', 'Train')
-
-# 保存 en 数据
+# Define output paths
 en_path = os.path.join(train_folder, 'en_data_train.parquet')
-extracted_df[['en']].dropna().to_parquet(en_path, index=False)
-
-# 保存 de 数据
 de_path = os.path.join(train_folder, 'de_data_train.parquet')
+
+# Save filtered en/de data
+extracted_df[['en']].dropna().to_parquet(en_path, index=False)
 extracted_df[['de']].dropna().to_parquet(de_path, index=False)
 
-print(f"en 数据已保存到: {en_path}")
-print(f"de 数据已保存到: {de_path}")
+print(f"en data saved to: {en_path}")
+print(f"de data saved to: {de_path}")
+
+# File size utility function
 def get_file_size(file_path):
-    return os.path.getsize(file_path)
-train_folder = os.path.join('DataProcessing', 'train')
-en_path = os.path.join(train_folder, 'en_data_train.parquet')
-de_path = os.path.join(train_folder, 'de_data_train.parquet')
-if os.path.exists(en_path):
-    en_size = get_file_size(en_path)
-    en_df = pd.read_parquet(en_path)
-    en_shape = en_df.shape
-    en_count = en_shape[0]
-    print(f"en 文件大小: {en_size} 字节")
-    print(f"en DataFrame 形状: {en_shape}")
-    print(f"en 数据行数: {en_count}")
-else:
-    print(f"{en_path} 不存在")
-
-# 获取并打印 de 文件的大小、形状和行数
-if os.path.exists(de_path):
-    de_size = get_file_size(de_path)
-    de_df = pd.read_parquet(de_path)
-    de_shape = de_df.shape
-    de_count = de_shape[0]
-    print(f"de 文件大小: {de_size} 字节")
-    print(f"de DataFrame 形状: {de_shape}")
-    print(f"de 数据行数: {de_count}")
-else:
-    print(f"{de_path} 不存在")
-
-
-def get_file_size(file_path):
+    """Get file size in bytes"""
     return os.path.getsize(file_path)
 
-#看看第一行数据
-print("en数据第一行：")
-print(en_df.head(1))
-print("de数据第一行：")
-print(de_df.head(1))
+# Validate file statistics
+def print_file_stats(file_path, lang):
+    """Print file statistics for validation"""
+    if not os.path.exists(file_path):
+        print(f"{lang} file not found: {file_path}")
+        return
+    
+    file_size = get_file_size(file_path)
+    df = pd.read_parquet(file_path)
+    row_count, col_count = df.shape
+    
+    print(f"\n{lang.upper()} File Statistics:")
+    print(f"Size: {file_size} bytes")
+    print(f"Shape: ({row_count}, {col_count})")
+    print(f"Row Count: {row_count}")
+    print("First Record:")
+    print(df.head(1).to_string(index=False))
 
-
+# Execute validation
+print_file_stats(en_path, 'en')
+print_file_stats(de_path, 'de')
