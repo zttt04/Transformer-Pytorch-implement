@@ -43,15 +43,18 @@ I'm waiting for you to find out the answer.
 
 # Appendix
 - Record some mistakes I made during the experience
+
 <figure>
   <img src="fig/Mistake1.jpg" alt="Mistake1" width="60%">
-  <figcaption>Forget shuffle when training</figcaption>
+  <figcaption>Mistake1:Forget shuffle when training</figcaption>
 </figure>
+
 <figure>
   <img src="fig/Mistake2.jpg" alt="Mistake2" width="60%">
-  <figcaption>Forget ignore pad_idx when training</figcaption>
+  <figcaption>Mistake2:Forget ignore pad_idx when training</figcaption>
 </figure>
+
 <figure>
   <img src="fig/Mistake3.jpg" alt="Mistake3" width="60%">
-  <figcaption>ignore the wrong pad_idx when training</figcaption>
+  <figcaption>Mistake3:Ignore the wrong pad_idx when training</figcaption>
 </figure>
