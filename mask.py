@@ -1,3 +1,5 @@
+import torch
+import numpy as np
 def create_masks(src, trg, pad, device):
     """Create masks for source and target sequences in Transformer attention mechanism
     
