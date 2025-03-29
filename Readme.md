@@ -6,8 +6,8 @@ To help NLP beginners navigate this replication process with greater ease and ac
 
 ## FileFrame
 ![FileFrame](fig/FileFrame.png)
-## Data Preparation Notes
-
+## Data Preparation Notes!!
+- For the reason that the Train dataset are too big to upload, you needs to manual download!
 - The large train files (from [WMT14 de-en dataset](https://huggingface.co/datasets/wmt/wmt14/viewer/de-en)) need manual download  
 - Place the 3 train chunks in a new `Train` folder  
 - Run `Processing.py` → `Tokenizer.py` to generate indexed training data
